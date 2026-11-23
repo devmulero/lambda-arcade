@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lambda Arcade</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23252124'/%3E%3Cpath d='M11 24L16 11M14 17L21 24' stroke='%23f4ede2' stroke-width='2.8' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./hexalambda.css" />
+  <link rel="stylesheet" href="./bastion.css" />
+  <link rel="stylesheet" href="./lambdaman.css" />
+</head>
+<body>
+  <canvas id="worldCanvas"></canvas>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <!-- BARRA SUPERIOR MINIMALISTA -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="tag-btn hidden" id="backToHubBtn">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>
+        <span>Hub</span>
+      </button>
+      <div class="brand-mark" id="hubBrandMark">
+        <span class="brand-glyph">λ</span>
+        <span class="brand-text">Lambda</span>
+      </div>
+    </div>
+
+    <div class="topbar-center" id="hubHeaderCenter">
+      <span class="eyebrow">OFICINA DE LÓGICA FUNCIONAL</span>
+      <h1 class="heading">Escolha um desafio em Haskell</h1>
+    </div>
+
+    <div class="topbar-center hidden" id="gameHeaderCenter">
+      <span class="eyebrow" id="missionEyebrow">SUA PRIMEIRA MISSÃO</span>
+      <h1 class="heading" id="missionTitle">Faça o personagem correr</h1>
+      <p class="subheading" id="missionSub">Defina <code>acao obs = Correr 10</code></p>
+    </div>
+
+    <div class="topbar-right">
+      <div class="stars-badge" title="Estrelas acumuladas">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 1.4l2 4.2 4.6.6-3.3 3.2.8 4.6L8 11.8 3.9 14l.8-4.6L1.4 6.2 6 5.6z"/></svg>
+        <span id="starsCount">120</span>
+      </div>
+
+      <button class="nav-link" id="openAcademyBtn">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 3.5h4.5a1.5 1.5 0 011.5 1.5v8.5a1 1 0 00-1-1h-5v-9zM13.5 3.5H9A1.5 1.5 0 007.5 5v8.5a1 1 0 011-1h5v-9z"/></svg>
+        <span>Aprender</span>
+      </button>
+
+      <button class="nav-link" id="openWardrobeBtn">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"/><circle cx="6.2" cy="6.8" r=".9" fill="currentColor"/><circle cx="9.8" cy="6.8" r=".9" fill="currentColor"/><circle cx="8" cy="10" r=".9" fill="currentColor"/></svg>
+        <span>Visual</span>
+      </button>
+
+      <button class="nav-link" id="openRecordsBtn">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.5 2.5h7v4a3.5 3.5 0 01-7 0v-4zM8 10v3.5M5.5 13.5h5"/></svg>
+        <span>Recordes</span>
+      </button>
+
+      <button class="nav-link icon-only" id="muteBtn" title="Alternar áudio">
+        <svg id="soundIconOn" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 6.5h2.5L9 3.5v9L5.5 9.5H3zM11.5 5.5a3.5 3.5 0 010 5"/></svg>
+        <svg id="soundIconOff" class="hidden" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 6.5h2.5L9 3.5v9L5.5 9.5H3zM11.5 6l3 4M14.5 6l-3 4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- TELA 1: HUB DE JOGOS (4 JOGOS PRINCIPAIS) -->
+  <main class="hub-view" id="hubView">
+    <div class="games-grid" id="gamesGrid"></div>
+  </main>
+
+  <!-- TELA 2: GAME 1 — LAMBDA RUNNER -->
+  <section class="runner-view hidden" id="runnerView">
+    <div class="runner-subhud">
+      <div class="subhud-left">
+        <div class="stage-tag">
+          <span class="stage-num" id="stageBadgeNum">01</span>
+          <span id="stageBadgeName">Primeiros passos</span>
+        </div>
+        <div class="stage-dots-nav" id="stageNav">
+          <button class="nav-dot active" data-stage="1">1</button>
+          <button class="nav-dot" data-stage="2">2</button>
+          <button class="nav-dot" data-stage="3">3</button>
+          <button class="nav-dot" data-stage="4">∞</button>
+        </div>
+        <div class="boss-rule-tag hidden" id="bossRulePill"></div>
+      </div>
+
+      <div class="subhud-right">
+        <div class="score-strip">
+          <span class="chip-tag" id="chipsBox"><b id="chipsVal">0</b></span>
+          <span class="times-sep">×</span>
+          <span class="mult-tag" id="multBox"><b id="multVal">1</b></span>
+          <span class="strip-sep"></span>
+          <span class="total-readout"><b id="scoreVal">0</b> <small>/ <span id="targetVal">180</span></small></span>
+        </div>
+        <div class="vitals-readout">
+          <span>Água <b id="hydrationVal">100%</b></span>
+          <span>Sequência <b id="streakVal">0</b></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="center-ready" id="readyOverlay">
+      <button class="ready-play-btn" id="readyPlayBtn" aria-label="Iniciar corrida">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M8 5.14v14l11-7-11-7z"/></svg>
+      </button>
+      <span class="ready-label">PRONTO?</span>
+    </div>
+
+    <div class="modal-backdrop hidden" id="victoryOverlay">
+      <div class="paper-modal victory-card">
+        <span class="eyebrow-tag">BLIND SUPERADO · +<span id="starsEarnedText">45</span> ESTRELAS</span>
+        <h2>Onda concluída</h2>
+        <p class="muted-copy">Escolha um modificador funcional para a próxima etapa:</p>
+        <div class="draft-grid" id="jokerDraftGrid"></div>
+        <button class="btn-primary" id="nextMissionBtn">Continuar</button>
+      </div>
+    </div>
+
+    <section class="logic-dock" id="logicDock">
+      <div class="dock-top-strip">
+        <div class="joker-strip" id="jokerStrip"></div>
+        <button class="toggle-code-btn" id="toggleDrawerBtn">Recolher código</button>
+      </div>
+
+      <div class="workbench-card" id="workbenchCard">
+        <div class="editor-col">
+          <div class="editor-toolbar">
+            <span class="panel-label">DEFINIÇÃO HASKELL</span>
+            <div class="type-xray-bar" id="runnerTypeBar"></div>
+            <div class="quick-tokens">
+              <button class="tok-btn rtok" data-snip='| obs == "pedra" = Pular'>| guard</button>
+              <button class="tok-btn rtok" data-snip="Pular">Pular</button>
+              <button class="tok-btn rtok" data-snip="Abaixar">Abaixar</button>
+              <button class="tok-btn rtok" data-snip="BeberAgua">BeberAgua</button>
+              <button class="tok-btn rtok" data-snip="map ">map</button>
+            </div>
+          </div>
+
+          <div class="code-box">
+            <div class="line-nums" id="lineNumbers">1</div>
+            <div class="code-layers">
+              <div class="active-line-bar hidden" id="activeLineBar"></div>
+              <pre class="code-hl" id="codeHighlight" aria-hidden="true"></pre>
+              <textarea id="codeEditor" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="logic-col">
+          <div class="cases-header">
+            <span class="panel-label">TESTES DE ENTRADA</span>
+            <span class="cases-count" id="coverageBadge">0/0</span>
+          </div>
+          <div class="cases-list" id="truthCases"></div>
+          <div class="feedback-line" id="statusText">Pronto para aplicar sua função.</div>
+          <div class="action-row">
+            <button class="btn-primary" id="runBtn">Aplicar e Correr</button>
+            <button class="btn-ghost" id="pauseBtn" title="Pausar/Retomar">Pausar</button>
+            <button class="btn-ghost" id="hintBtn" title="Ver dica">?</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="bottom-meta">
+      <div class="progress-dashes" id="progressDots">
+        <span class="dash active"></span><span class="dash"></span><span class="dash"></span><span class="dash"></span>
+      </div>
+      <div class="mission-counter" id="missionCounter">MISSÃO 1 DE 4</div>
+    </footer>
+  </section>
+
+  <!-- MODAL: ACADEMIA HASKELL + OFICINAS INTERATIVAS + SANDBOX -->
+  <div class="modal-backdrop hidden" id="academyModal">
+    <div class="paper-modal wide-modal">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow-tag">OFICINAS PRÁTICAS &amp; SANDBOX</span>
+          <h2>Caderno de Haskell</h2>
+        </div>
+        <button class="close-x" data-close="academyModal">✕</button>
+      </div>
+      <div class="level-tabs" id="academyTabs">
+        <button class="tab-pill active" data-level="all">Todos</button>
+        <button class="tab-pill" data-level="Iniciante">Iniciante</button>
+        <button class="tab-pill" data-level="Intermediário">Intermediário</button>
+        <button class="tab-pill" data-level="Avançado">Avançado</button>
+        <button class="tab-pill" data-level="Sandbox">Sandbox Livre</button>
+      </div>
+
+      <div class="academy-layout" id="academyStudyLayout">
+        <div class="study-cards-grid" id="studyCardsGrid"></div>
+
+        <div class="study-detail academy-lab">
+          <div class="lab-head">
+            <div>
+              <span class="eyebrow-tag" id="lessonEyebrow">OFICINA</span>
+              <h3 id="lessonTitle" style="font-size:16px">Carregando...</h3>
+            </div>
+            <div class="type-xray-bar" id="academyTypeBar"></div>
+          </div>
+
+          <p class="lab-summary" id="lessonSummary"></p>
+          <canvas id="academyMiniCanvas" class="academy-mini-canvas"></canvas>
+
+          <div class="quick-tokens" id="academyQuickTokens"></div>
+
+          <div class="code-box lab-code-box">
+            <div class="line-nums" id="academyLineNumbers">1</div>
+            <div class="code-layers">
+              <pre class="code-hl" id="academyCodeHighlight" aria-hidden="true"></pre>
+              <textarea id="academyCodeEditor" class="code-ed" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+            </div>
+          </div>
+
+          <div class="cases-list lab-tests" id="academyTestsStrip"></div>
+          <div class="feedback-line" id="academyFeedback">Edite e teste seu código Haskell!</div>
+          <div class="sandbox-output hidden" id="academyHintBox"></div>
+
+          <div class="action-row">
+            <button class="btn-primary" id="academyRunBtn">Executar &amp; Animar (Ctrl+Enter)</button>
+            <button class="btn-ghost" id="academyHintBtn">Dica</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sandbox-panel hidden" id="academySandboxLayout">
+        <div class="sandbox-top">
+          <span class="panel-label">MOTOR: VM FUNCIONAL JS</span>
+          <div class="quick-tokens">
+            <button class="tok-btn sbx-preset" data-code="map (* 2) (filter even [1..8])">map + filter</button>
+            <button class="tok-btn sbx-preset" data-code="[ (a, b) | a <- [1..3], b <- [1..3], a + b == 4 ]">Compreensão</button>
+            <button class="tok-btn sbx-preset" data-code="foldl (+) 0 [10, 20, 30]">foldl</button>
+            <button class="tok-btn sbx-preset" data-code="(+ 5) <$> Just 12">Maybe &lt;$&gt;</button>
+          </div>
+        </div>
+        <textarea id="sandboxInput" class="sandbox-textarea" spellcheck="false">map (* 2) (filter even [1..8])</textarea>
+        <div class="action-row">
+          <button class="btn-primary" id="sandboxRunBtn" style="flex:none">Avaliar Expressão (Ctrl+Enter)</button>
+        </div>
+        <div class="sandbox-output" id="sandboxOutput">Resultado aparecerá aqui...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ESTÚDIO VISUAL (GUARDA-ROUPA) -->
+  <div class="modal-backdrop hidden" id="wardrobeModal">
+    <div class="paper-modal wide-modal">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow-tag">PERSONALIZAÇÃO · <span id="wardrobeCountLabel">0/0</span></span>
+          <h2>Estúdio Visual</h2>
+        </div>
+        <button class="close-x" data-close="wardrobeModal">✕</button>
+      </div>
+      <p class="muted-copy">Desbloqueie cores, acessórios, rastros, companheiros e paisagens com suas estrelas e teste ao vivo.</p>
+
+      <div class="wardrobe-studio">
+        <div class="wardrobe-preview-col">
+          <canvas id="wardrobePreviewCanvas" class="wardrobe-preview-canvas"></canvas>
+          <div class="pose-toggle-row">
+            <button class="tab-pill wpose-btn active" data-pose="run">Correndo</button>
+            <button class="tab-pill wpose-btn" data-pose="idle">Parado</button>
+            <button class="tab-pill wpose-btn" data-pose="jump">Pulando</button>
+          </div>
+        </div>
+        <div class="wardrobe-catalog-col">
+          <div class="level-tabs" id="wardrobeTabs"></div>
+          <div class="wardrobe-items-grid" id="wardrobeItemsGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RECORDES & CONQUISTAS -->
+  <div class="modal-backdrop hidden" id="recordsModal">
+    <div class="paper-modal medium-modal">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow-tag">HISTÓRICO</span>
+          <h2>Recordes e Conquistas</h2>
+        </div>
+        <button class="close-x" data-close="recordsModal">✕</button>
+      </div>
+      <div class="records-summary" id="recordsSummary"></div>
+      <h3 class="section-sub">Conquistas</h3>
+      <div class="achievements-grid" id="achievementsGrid"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: INFO / DICA / PREVIEW -->
+  <div class="modal-backdrop hidden" id="infoModal">
+    <div class="paper-modal small-modal">
+      <div class="modal-head">
+        <h2 id="infoModalTitle">Informação</h2>
+        <button class="close-x" data-close="infoModal">✕</button>
+      </div>
+      <div class="info-modal-body" id="infoModalBody"></div>
+    </div>
+  </div>
+
+  <script src="./core.js"></script>
+  <script src="./haskell-vm.js"></script>
+  <script src="./academy.js"></script>
+  <script src="./wardrobe.js"></script>
+  <script src="./runner.js"></script>
+  <script src="./hexalambda.js"></script>
+  <script src="./bastion.js"></script>
+  <script src="./lambdaman.js"></script>
+</body>
+</html>

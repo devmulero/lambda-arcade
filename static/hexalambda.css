@@ -1,0 +1,99 @@
+/* =========================================================================
+   HEXALAMBDA — Santuário em Tela Cheia + Peças de Cerâmica 3D
+   ========================================================================= */
+
+.hexa-view {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.hexa-view > * {
+  pointer-events: auto;
+}
+
+#hexaCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.hexa-hud-bar {
+  position: fixed;
+  top: 124px;
+  left: 26px;
+  right: 26px;
+  z-index: 15;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.hexa-pill {
+  background: rgba(245, 239, 230, 0.90);
+  color: var(--ink, #272022);
+  border-radius: 9px;
+  padding: 5px 11px;
+  font-size: 11.5px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(30, 20, 18, 0.12);
+}
+.hexa-pill.mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.hexa-pill.solved {
+  background: #5c8d76;
+  color: #fff;
+}
+
+.hexa-workbench {
+  height: 204px;
+}
+
+.hexa-solutions-box {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.48;
+  color: #dcd4cb;
+}
+
+#hexaCodeHighlight,
+#hexaCodeEditor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 9px 11px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  border: none;
+  outline: none;
+  margin: 0;
+}
+
+#hexaCodeHighlight { pointer-events: none; color: #eee8df; }
+#hexaCodeEditor {
+  background: transparent;
+  color: transparent;
+  caret-color: #d49b38;
+  resize: none;
+  user-select: text;
+}

@@ -1,0 +1,198 @@
+/* =========================================================================
+   BASTION GUARD — Mundo Aberto em Tela Cheia + Feedback de Combate/Derrota
+   ========================================================================= */
+
+.bastion-view {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.bastion-view > * {
+  pointer-events: auto;
+}
+
+#bastionCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.bastion-hud-bar {
+  position: fixed;
+  top: 124px;
+  left: 26px;
+  right: 26px;
+  z-index: 15;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+.bastion-hud-bar > * { pointer-events: auto; }
+
+.tower-palette {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 239, 230, 0.90);
+  padding: 5px 8px;
+  border-radius: 11px;
+  box-shadow: 0 6px 18px rgba(30, 20, 18, 0.14);
+}
+
+.tower-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid rgba(39, 32, 34, 0.12);
+  background: #fff;
+  color: var(--ink, #272022);
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.15s;
+}
+.tower-pick:hover { transform: translateY(-1px); }
+.tower-pick.active {
+  background: var(--ink, #272022);
+  color: var(--paper, #f5efe6);
+  border-color: var(--ink, #272022);
+}
+.tower-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.bastion-pill {
+  background: rgba(245, 239, 230, 0.90);
+  color: var(--ink, #272022);
+  border-radius: 9px;
+  padding: 5px 11px;
+  font-size: 11.5px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(30, 20, 18, 0.12);
+}
+.bastion-pill.danger {
+  background: #b84a4a;
+  color: #fff;
+}
+
+/* Vinheta de Dano nas Bordas */
+.bastion-damage-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: inset 0 0 110px 38px rgba(184, 74, 74, 0.78);
+  transition: opacity 0.25s ease-out;
+}
+.bastion-damage-vignette.flash {
+  opacity: 1;
+  transition: none;
+}
+
+/* Card de Derrota Central (sem cobrir o editor lá embaixo) */
+.bastion-defeat-banner {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(470px, 92vw);
+  z-index: 18;
+  background: rgba(245, 239, 230, 0.96);
+  color: var(--ink, #272022);
+  border: 2px solid #b84a4a;
+  border-radius: 16px;
+  padding: 18px 20px;
+  text-align: center;
+  box-shadow: 0 22px 48px rgba(24, 14, 16, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: defeatPop 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes defeatPop {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.95); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.bastion-defeat-banner h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #b84a4a;
+}
+.bastion-defeat-banner p {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-soft, #635049);
+}
+.bastion-defeat-diag {
+  background: rgba(184, 74, 74, 0.09);
+  border: 1px solid rgba(184, 74, 74, 0.25);
+  border-radius: 9px;
+  padding: 8px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #272022;
+}
+.bastion-defeat-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.bastion-workbench {
+  height: 204px;
+}
+
+.bastion-preview-box {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: #dcd4cb;
+}
+
+#bastionCodeHighlight,
+#bastionCodeEditor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 9px 11px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  border: none;
+  outline: none;
+  margin: 0;
+}
+
+#bastionCodeHighlight { pointer-events: none; color: #eee8df; }
+#bastionCodeEditor {
+  background: transparent;
+  color: transparent;
+  caret-color: #d49b38;
+  resize: none;
+  user-select: text;
+}

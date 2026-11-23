@@ -1,0 +1,29 @@
+cabal-version:      3.0
+name:               lambda-arcade
+version:            0.1.0.0
+build-type:         Simple
+
+executable lambda-arcade
+  main-is:          Main.hs
+  hs-source-dirs:   src
+  other-modules:
+      Api
+    , Models
+    , Db
+    , Generator
+    , Rules
+  default-language: Haskell2010
+  ghc-options:      -Wall -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >= 4.16 && < 5
+    , aeson
+    , bytestring
+    , containers
+    , http-types
+    , postgresql-simple
+    , random
+    , servant
+    , servant-server
+    , text
+    , time
+    , warp
