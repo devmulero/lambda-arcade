@@ -4,7 +4,6 @@ module Main where
 
 import Control.Concurrent.MVar (MVar, newMVar)
 import Control.Monad.IO.Class (liftIO)
-import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy.Char8 as LBS8
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
@@ -14,8 +13,10 @@ import Data.Time.Clock (getCurrentTime, utctDay)
 import Database.PostgreSQL.Simple (Connection, connectPostgreSQL)
 import Network.Wai.Handler.Warp (run)
 import Servant
-import Servant.Server.StaticFiles (serveDirectoryWebApp)
+import Servant.Server.StaticFiles (serveDirectoryFileServer)
 import System.Environment (lookupEnv)
+import System.IO (BufferMode (LineBuffering), hSetBuffering, stdout)
+import Text.Read (readMaybe)
 
 import Api
 import Db
@@ -33,7 +34,7 @@ server connVar =
   :<|> progressH
   :<|> runsH
   :<|> leaderboardH
-  :<|> serveDirectoryWebApp "static"
+  :<|> serveDirectoryFileServer "static" -- "/" abre o index.html
   where
     healthH :: Handler Text
     healthH = pure "Lambda Arcade Servant + PostgreSQL OK"
@@ -76,8 +77,11 @@ server connVar =
 
 main :: IO ()
 main = do
-  dbUrl <- fromMaybe "postgres://postgres:postgres@localhost:5432/lambda_arcade" <$> lookupEnv "DATABASE_URL"
-  conn <- connectPostgreSQL (BS8.pack dbUrl)
+  hSetBuffering stdout LineBuffering -- logs aparecem na hora no Render
+  conn <- connectPostgreSQL =<< getDbUrl
   connVar <- newMVar conn
-  putStrLn "Lambda Arcade rodando em http://localhost:8080"
-  run 8080 (serve arcadeAPI (server connVar))
+  -- Na nuvem (Render) a porta vem da variavel PORT; no PC continua 8080
+  portStr <- lookupEnv "PORT"
+  let port = fromMaybe 8080 (portStr >>= readMaybe)
+  putStrLn ("Lambda Arcade rodando na porta " <> show port)
+  run port (serve arcadeAPI (server connVar))
