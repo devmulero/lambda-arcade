@@ -2,11 +2,45 @@
 
 module Db where
 
-import Control.Concurrent.MVar (MVar, withMVar)
+import Control.Concurrent.MVar (MVar, modifyMVar)
+import Control.Exception (SomeException, throwIO, try)
+import qualified Data.ByteString.Char8 as BS8
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
+import System.Environment (lookupEnv)
 import Models
+
+-- | URL do banco: vem da variavel de ambiente DATABASE_URL (na nuvem)
+--   ou cai no PostgreSQL local (no PC).
+getDbUrl :: IO BS8.ByteString
+getDbUrl =
+  BS8.pack . fromMaybe "postgres://postgres:postgres@localhost:5432/lambda_arcade"
+    <$> lookupEnv "DATABASE_URL"
+
+tryAny :: IO a -> IO (Either SomeException a)
+tryAny = try
+
+-- | Executa uma acao com a conexao guardada no MVar (uma requisicao por vez).
+--   Se a acao falhar E a conexao estiver morta (ex.: o Neon dormiu apos
+--   5 min parado e derrubou a conexao), abre uma conexao nova, guarda no
+--   MVar e tenta a acao de novo uma unica vez.
+withConn :: MVar Connection -> (Connection -> IO a) -> IO a
+withConn connVar action = modifyMVar connVar $ \conn -> do
+  resultado <- tryAny (action conn)
+  case resultado of
+    Right x -> pure (conn, x)
+    Left erro -> do
+      vivo <- tryAny (query_ conn "SELECT 1" :: IO [Only Int])
+      case vivo of
+        Right _ -> throwIO erro -- conexao ok: o erro era outro, repassa
+        Left _ -> do
+          putStrLn "Conexao com o banco caiu; reconectando..."
+          _ <- tryAny (close conn)
+          novaConn <- connectPostgreSQL =<< getDbUrl
+          x <- action novaConn
+          pure (novaConn, x)
 
 data PlayerRow = PlayerRow
   Int Text Int Int Int Int Text Text Text Text Text
@@ -26,7 +60,7 @@ defaultItems =
   ]
 
 getOrCreatePlayer :: MVar Connection -> Text -> IO PlayerProfile
-getOrCreatePlayer connVar uname = withMVar connVar $ \conn -> do
+getOrCreatePlayer connVar uname = withConn connVar $ \conn -> do
   rows <- query conn
     "INSERT INTO players (username) VALUES (?) \
     \ON CONFLICT (username) DO UPDATE SET username = EXCLUDED.username \
@@ -44,7 +78,7 @@ getOrCreatePlayer connVar uname = withMVar connVar $ \conn -> do
 
 updateWardrobe :: MVar Connection -> Text -> WardrobeReq -> IO (Either Text PlayerProfile)
 updateWardrobe connVar uname req = do
-  res <- withMVar connVar $ \conn -> do
+  res <- withConn connVar $ \conn -> do
     [(pid, stars)] <- query conn "SELECT id, stars FROM players WHERE username = ?" (Only uname) :: IO [(Int, Int)]
     owned <- query conn
       "SELECT 1 FROM player_unlocks WHERE player_id = ? AND category = 'item' AND unlock_key = ?"
@@ -73,7 +107,7 @@ updateWardrobe connVar uname req = do
 
 saveProgress :: MVar Connection -> Text -> ProgressReq -> IO PlayerProfile
 saveProgress connVar uname pr = do
-  _ <- withMVar connVar $ \conn -> do
+  _ <- withConn connVar $ \conn -> do
     [Only pid] <- query conn "SELECT id FROM players WHERE username = ?" (Only uname) :: IO [Only Int]
     inserted <- execute conn
       "INSERT INTO player_unlocks (player_id, category, unlock_key) VALUES (?, ?, ?) ON CONFLICT DO NOTHING"
@@ -87,7 +121,7 @@ saveProgress connVar uname pr = do
 
 saveRun :: MVar Connection -> SubmitRunReq -> IO PlayerProfile
 saveRun connVar sr = do
-  _ <- withMVar connVar $ \conn -> do
+  _ <- withConn connVar $ \conn -> do
     [Only pid] <- query conn "SELECT id FROM players WHERE username = ?" (Only (srUsername sr)) :: IO [Only Int]
     _ <- execute conn
       "INSERT INTO runs (player_id, game, seed, tier, score, hof_mult, code_submitted) VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -100,7 +134,7 @@ saveRun connVar sr = do
   getOrCreatePlayer connVar (srUsername sr)
 
 getLeaderboard :: MVar Connection -> GameKind -> Maybe Int -> IO [LeaderboardEntry]
-getLeaderboard connVar game mSeed = withMVar connVar $ \conn -> do
+getLeaderboard connVar game mSeed = withConn connVar $ \conn -> do
   rows <- case mSeed of
     Just s -> query conn
       "SELECT p.username, r.score, r.hof_mult, r.tier \
